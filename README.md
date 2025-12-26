@@ -47,7 +47,7 @@ cd NectarSTT
 
 ### 2️⃣ Create a virtual environment (recommended)
 python -m venv venv
-venv\Scripts\activate   # Windows
+venv\Scripts\activate 
 
 ### 3️⃣ Install dependencies
 pip install -r requirements.txt
@@ -140,5 +140,6 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
 
 
