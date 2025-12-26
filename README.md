@@ -18,37 +18,14 @@ This project focuses on **accurate speech recognition**, **low latency**, and **
 
 ---
 
-## 📁 Project Structure
-```
-NectarSTT/
-│
-├── Production/
-|   ├── InnoScript/ 
-|   |   └── NectarSTT.iss
-|   ├── icons8-speak-48
-|   ├── LICENSE
-|   ├── NectarSTT.reg
-|   ├── postinstall.txt
-|   └── preinstall.txt
-|
-├── Main-Engine/
-│ ├── STT-Engine/ # Speech-to-text core
-│ ├── TTS-Engine/ # Text-to-speech core
-│ ├── Model/ # Speech models 
-| ├── Sound/ # Sound Effects
-| ├── Source/ # Test Code
-│ └── Images/ # UI / assets
-│
-├── .gitignore
-├── README.md
-├── Main.py
-└── requirements.txt
-```
-> ⚠️ **Note:** Large models and voice data are present in Realese.
-
----
-
 ## 🛠️ Installation
+
+### 0️⃣ Direct install
+```
+pip install nectarstt
+```
+
+- `OR if you want code`
 
 ### 1️⃣ Clone the repository
 ```bash
@@ -64,6 +41,36 @@ venv\Scripts\activate
 ### 3️⃣ Install dependencies
 pip install -r requirements.txt
 
+---
+
+## 📁 Usage Examples
+
+### Direct use after installation
+- `to use the GUI for NectarSTT run:`
+    ``` 
+    NectarSTT
+    ```  
+---
+- `use in code:`
+### TTS:
+```python
+from nectarstt import piper_tts
+
+piper_tts("This is top-level API usage.", "out.wav")
+
+```
+
+---
+
+### STT:
+```python
+from nectarstt import record_until_silence
+
+text = record_until_silence()
+
+```
+
+> ⚠️ **Note:** Before you use download the Main-Engine from [Engine](https://github.com/headlessripper/NectarSTT/releases/download/1.0/Main-Engine.zip) then extract it to the root folder of your project.
 
 ---
 
@@ -74,39 +81,14 @@ This archive contains:
 
 - `Main-Engine/Model/`
 - `Main-Engine/TTS-Engine/`
+- `Main-Engine/STT-Engine/`
+- `Main-Engine/Images/`
+- `Main-Engine/Sound/`
+- `Main-Engine/Source/`
 
 Extract `Main-Engine.zip` into the project directory before running NectarSTT.
 
 > 💡 A setup script or model downloader may be added in future releases.
-
----
-
-### ▶️ Usage
-
-Example (basic run):
-
-- `python main.py`
-
-Or import as a module:
-
-- `from nectar_stt import recognize_speech`
-```
-text = recognize_speech()
-print(text)
-```
----
-
-## ⚙️ Configuration
-
-You can configure:
-
-- 🎤 Microphone device
-- ⏱️ Timeout values
-- 🌐 Language
-- 🧠 Model selection
-
-These settings can be adjusted in the engine UI or directly in the code, depending on your integration needs.
-
 
 ---
 
@@ -148,14 +130,4 @@ If you find **NectarSTT** useful:
 
 ---
 
-**Built with ❤️ in Python for high-quality, low-latency speech recognition.**
-
-
-
-
-
-
-
-
-
-
+**Built with ❤️ in Python for high-quality, low-latency STT And TTS Engine**
