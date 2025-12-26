@@ -24,8 +24,10 @@ NectarSTT/
 │
 ├── Main-Engine/
 │ ├── STT-Engine/ # Speech-to-text core
-│ ├── TTS-Engine/ # Text-to-speech integration
-│ ├── Model/ # Speech models (ignored in git)
+│ ├── TTS-Engine/ # Text-to-speech core
+│ ├── Model/ # Speech models 
+| ├── Sound/ # Sound Effects
+| ├── Source/ # Test Code
 │ └── Images/ # UI / assets
 │
 ├── .gitignore
@@ -137,6 +139,7 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
 
 
 
