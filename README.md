@@ -32,7 +32,7 @@ NectarSTT/
 ├── README.md
 └── requirements.txt
 
-> ⚠️ **Note:** Large models and voice data are intentionally excluded from the repository.
+> ⚠️ **Note:** Large models and voice data are present in Realese.
 
 ---
 
@@ -137,6 +137,7 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
 
 
 
