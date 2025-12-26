@@ -22,6 +22,15 @@ This project focuses on **accurate speech recognition**, **low latency**, and **
 ```
 NectarSTT/
 │
+├── Production/
+|   ├── InnoScript/ 
+|   |   └── NectarSTT.iss
+|   ├── icons8-speak-48
+|   ├── LICENSE
+|   ├── NectarSTT.reg
+|   ├── postinstall.txt
+|   └── preinstall.txt
+|
 ├── Main-Engine/
 │ ├── STT-Engine/ # Speech-to-text core
 │ ├── TTS-Engine/ # Text-to-speech core
@@ -140,6 +149,7 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
 
 
 
