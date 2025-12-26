@@ -35,6 +35,9 @@ import re
 import numpy as np
 import threading
 import json
+from PyQt6.QtMultimedia import QMediaPlayer
+import socket
+import threading
 
 import os
 
@@ -66,32 +69,118 @@ def find_MainFolder(relative_path):
     return abs_path
 
 
-#--------------------------------------------------------------------------------
-# Send Function
-#--------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+# Class Threads / Signal
+#------------------------------------------------------------------------------
 
-def send_to_AlphaLLM(question):
-    import socket
-    
-    SERVER_ADDRESS = ('127.0.0.1', 5005)
-    AUTH_KEY = ("NEC-892657") # 🔒 Security Key  # must match the server’s key
+AUTH_KEY = "NEC-892657"
 
-    try:
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #client.settimeout(10)  # optional safety timeout
-        client.connect(SERVER_ADDRESS)
+class StreamClientWorker(QThread):
+    chunk_received = pyqtSignal(str)
+    finished_response = pyqtSignal()
 
-        # Prepend the key before the question
-        secure_message = f"{AUTH_KEY} {question}"
-        client.sendall(secure_message.encode('utf-8'))
+    def __init__(self, prompt: str, parent=None):
+        super().__init__(parent)
+        self.prompt = prompt
+        self._stop = False
+        self._sock = None
+        self._finished = False  # 🔐 single-exit lock
 
-        response = client.recv(8192).decode('utf-8').strip()
-        client.close()
+    def run(self):
+        try:
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.connect(("127.0.0.1", 5005))
+            self._sock.sendall(f"{AUTH_KEY} {self.prompt}".encode())
 
-        return response
+            buffer = b""
 
-    except (socket.error, socket.timeout) as e:
-        return f"[Error] Could not connect to NectarLLM: {e}"    
+            while not self._stop:
+                data = self._sock.recv(8192)
+                if not data:
+                    break
+
+                buffer += data
+                
+                # 🔥 Check for end marker FIRST - single pass logic
+                if b"<<END_OF_RESPONSE>>" in buffer:
+                    before, _, remaining = buffer.partition(b"<<END_OF_RESPONSE>>")
+                    if before:
+                        self.chunk_received.emit(before.decode("utf-8", errors="ignore"))
+                    buffer = remaining  # Handle trailing data if any
+                    self._emit_finished()
+                    return  # 🔥 EXIT THREAD
+
+                # No end marker - emit all accumulated data
+                if buffer:
+                    self.chunk_received.emit(buffer.decode("utf-8", errors="ignore"))
+                    buffer = b""  # Reset for next recv
+
+        except Exception as e:
+            print("Worker error:", e)
+            self._emit_finished()
+        
+        self._emit_finished()
+
+    def _emit_finished(self):
+        if not self._finished:
+            self._finished = True
+            self.finished_response.emit()
+
+    def stop(self):
+        self._stop = True
+        if self._sock:
+            try:
+                self._sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+class SpeechWorker(QObject):
+    finished = pyqtSignal(str)  # emit temp file path after synthesis
+    error = pyqtSignal(str)
+
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+    def run(self):
+        try:
+            # Create a temporary file for the TTS output
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmpfile:
+                output_path = tmpfile.name
+
+            # Build the piper command
+            cmd = [
+                PIPER_EXE_PATH,
+                "--model", Config.ONNEX_MODEL_PATH,
+                "--output_file", output_path,
+                "--use-cuda", "1",
+                "--length-scale", str(Config.VOICE_SPEED),
+            ]
+
+            # Prevent terminal popup on Windows
+            creationflags = 0
+            if sys.platform == "win32":
+                creationflags = subprocess.CREATE_NO_WINDOW
+
+            # Run Piper SILENTLY
+            process = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                creationflags=creationflags,     # <-- hides terminal window
+            )
+
+            stdout, stderr = process.communicate(input=self.text.encode("utf-8"))
+
+            if process.returncode != 0:
+                raise RuntimeError(f"Piper failed: {stderr.decode()}")
+
+            # Emit the temp file path when done
+            self.finished.emit(output_path)
+
+        except Exception as e:
+            self.error.emit(str(e))
 
 # -------------------- Configuration --------------------
 CONFIG_FILE = "config.json"
@@ -180,54 +269,6 @@ class Notify(QWidget):
         # Auto-close timer
         QTimer.singleShot(duration, self.close)
         self.show()
-
-class SpeechWorker(QObject):
-    finished = pyqtSignal(str)  # emit temp file path after synthesis
-    error = pyqtSignal(str)
-
-    def __init__(self, text):
-        super().__init__()
-        self.text = text
-
-    def run(self):
-        try:
-            # Create a temporary file for the TTS output
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmpfile:
-                output_path = tmpfile.name
-
-            # Build the piper command
-            cmd = [
-                PIPER_EXE_PATH,
-                "--model", Config.ONNEX_MODEL_PATH,
-                "--output_file", output_path,
-                "--use-cuda", "1",
-                "--length-scale", str(Config.VOICE_SPEED),
-            ]
-
-            # Prevent terminal popup on Windows
-            creationflags = 0
-            if sys.platform == "win32":
-                creationflags = subprocess.CREATE_NO_WINDOW
-
-            # Run Piper SILENTLY
-            process = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                creationflags=creationflags,     # <-- hides terminal window
-            )
-
-            stdout, stderr = process.communicate(input=self.text.encode("utf-8"))
-
-            if process.returncode != 0:
-                raise RuntimeError(f"Piper failed: {stderr.decode()}")
-
-            # Emit the temp file path when done
-            self.finished.emit(output_path)
-
-        except Exception as e:
-            self.error.emit(str(e))
             
 class AnimatedDot(QLabel):
     dotClicked = pyqtSignal()
@@ -431,6 +472,12 @@ class Main(QWidget):
 
         # Connect to mediaStatusChanged to cleanup after finished
         self.player.mediaStatusChanged.connect(self.cleanup_player)
+
+        self.current_llm_worker = None
+        self.speech_worker = None 
+        self.current_response = ""
+        self.audio_output = None
+        self.audio_device = None
 
         # -------------------
         # MAIN WINDOW STYLES
@@ -917,7 +964,6 @@ class Main(QWidget):
         self.stop_recording = False
 
         # Start listening in a thread so UI stays responsive
-        import threading
         threading.Thread(target=self._continuous_listening, daemon=True).start()
 
     # -------------------------------------
@@ -931,14 +977,28 @@ class Main(QWidget):
 
     def _continuous_listening(self):
         text = self.record_until_silence_ui_controlled()
-
         if text:
-            self.textout.setText(text)
-            response = send_to_AlphaLLM(text)
-            self.textout.setText(response)
-
-            threading.Thread(target=self.speak_response, args=(response,), daemon=True).start()
+            self.textout.setText(f"{text}")
+            self.current_response = ""
             
+            # Store reference + NO parent=self
+            self.current_llm_worker = StreamClientWorker(text)
+            
+            # Direct method connections (no lambdas)
+            self.current_llm_worker.chunk_received.connect(self._on_text_chunk)
+            self.current_llm_worker.finished_response.connect(self._on_text_finished)
+            
+            self.current_llm_worker.start()
+
+    def _on_text_chunk(self, chunk: str):
+        if chunk:
+            self.current_response += chunk
+            self.textout.setText(self.current_response)
+
+    def _on_text_finished(self):
+        self.speak_response(self.current_response)
+        self.current_llm_worker = None
+
     def speak_response(self, text):
         self.worker = SpeechWorker(text)
         self.thread = QThread()
@@ -1085,14 +1145,16 @@ class Main(QWidget):
         super().showEvent(event)
 
     def cleanup_player(self, status):
-        from PyQt6.QtMultimedia import QMediaPlayer
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
             self.player.stop()
             self.player.deleteLater()  # free resources
             self.audio_output.deleteLater()
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     w = Main()
     w.show()
     sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
