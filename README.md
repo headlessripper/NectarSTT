@@ -42,7 +42,7 @@ NectarSTT/
 ```bash
 git clone https://github.com/headlessripper/NectarSTT.git
 cd NectarSTT
-
+```
 ---
 
 ### 2️⃣ Create a virtual environment (recommended)
@@ -142,3 +142,4 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
