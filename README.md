@@ -93,7 +93,7 @@ You can configure:
 - 🌐 Language
 - 🧠 Model selection
 
-These settings can be adjusted in the engine configuration files or directly in the code, depending on your integration needs.
+These settings can be adjusted in the engine UI or directly in the code, depending on your integration needs.
 
 
 ---
@@ -103,7 +103,7 @@ These settings can be adjusted in the engine configuration files or directly in 
 - Automated model download & setup script
 - Extended TTS engine support
 - Additional language models
-- Optional GPU acceleration (where supported)
+- Optional Futher GPU acceleration (where supported)
 - Enhanced logging and debugging tools
 
 ---
@@ -123,10 +123,7 @@ Please open an issue to discuss major changes before starting work.
 ---
 
 ## 📜 License
-
-A dedicated `LICENSE` file will be added in a future update.  
-Until then, all rights are reserved by the author.
-
+Use a Custom License
 ---
 
 ## ⭐ Support
@@ -140,6 +137,7 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
 
 
 
