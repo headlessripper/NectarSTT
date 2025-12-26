@@ -73,17 +73,15 @@ Extract `Main-Engine.zip` into the project directory before running NectarSTT.
 
 Example (basic run):
 
-python main.py
-
+- `python main.py`
 
 Or import as a module:
 
-from nectar_stt import recognize_speech
-
+- `from nectar_stt import recognize_speech`
+```
 text = recognize_speech()
 print(text)
-
-
+```
 ---
 
 ## ⚙️ Configuration
@@ -142,4 +140,5 @@ If you find **NectarSTT** useful:
 ---
 
 **Built with ❤️ in Python for high-quality, low-latency speech recognition.**
+
 
